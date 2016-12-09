@@ -40,7 +40,7 @@ package OpenMV.LCD_Shield is
 
    function Get_Bitmap return HAL.Bitmap.Bitmap_Buffer'Class;
 
-   procedure Rotate_Screen_90
+   procedure Rotate_Screen_180
      with Pre => Initialized;
    procedure Rotate_Screen_0
      with Pre => Initialized;

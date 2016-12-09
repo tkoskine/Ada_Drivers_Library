@@ -150,9 +150,9 @@ package ST7735R is
                         Color : UInt16);
 
    procedure Write_Raw_Pixels (This : ST7735R_Device;
-                               Data : HAL.Byte_Array);
+                               Data : in out HAL.Byte_Array);
    procedure Write_Raw_Pixels (This : ST7735R_Device;
-                               Data : HAL.UInt16_Array);
+                               Data : in out HAL.UInt16_Array);
 
    overriding
    function Get_Max_Layers

@@ -73,8 +73,6 @@ package body ST7735R is
    pragma Unreferenced (Write_Data);
    procedure Write_Data (LCD  : ST7735R_Device;
                          Data : HAL.Byte_Array);
-   procedure Write_Data (LCD  : ST7735R_Device;
-                         Data : HAL.UInt16_Array);
 
    procedure Set_Command_Mode (LCD : ST7735R_Device);
    procedure Set_Data_Mode (LCD : ST7735R_Device);
@@ -509,7 +507,7 @@ package body ST7735R is
                         X, Y  : UInt16;
                         Color : UInt16)
    is
-      Data : constant HAL.UInt16_Array (1 .. 1) := (1 => Color);
+      Data : HAL.UInt16_Array (1 .. 1) := (1 => Color);
    begin
       Set_Address (This, X, X + 1, Y, Y + 1);
       Write_Raw_Pixels (This, Data);
@@ -520,9 +518,19 @@ package body ST7735R is
    ----------------------
 
    procedure Write_Raw_Pixels (This : ST7735R_Device;
-                               Data : HAL.Byte_Array)
+                               Data : in out HAL.Byte_Array)
    is
+      Index : Natural := Data'First + 1;
+      Tmp   : Byte;
    begin
+      --  The ST7735R uses a different endianness than our bitmaps
+      while Index <= Data'Last loop
+         Tmp := Data (Index);
+         Data (Index) := Data (Index - 1);
+         Data (Index - 1) := Tmp;
+         Index := Index + 1;
+      end loop;
+
       Write_Command (This, 16#2C#);
       Write_Data (This, Data);
    end Write_Raw_Pixels;
@@ -532,11 +540,12 @@ package body ST7735R is
    ----------------------
 
    procedure Write_Raw_Pixels (This : ST7735R_Device;
-                               Data : HAL.UInt16_Array)
+                               Data : in out HAL.UInt16_Array)
    is
+      Data_8b : HAL.Byte_Array (1 .. Data'Length * 2)
+        with Address => Data'Address;
    begin
-      Write_Command (This, 16#2C#);
-      Write_Data (This, Data);
+      Write_Raw_Pixels (This, Data_8b);
    end Write_Raw_Pixels;
 
    --------------------

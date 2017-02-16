@@ -103,7 +103,7 @@ package body STM32.Board is
    is
       I2C_Conf : I2C_Configuration;
    begin
-      if Port /= I2C_3 then
+      if Port /= I2C_3 and then Port /= I2C_1 then
          return;
       end if;
 
@@ -113,7 +113,11 @@ package body STM32.Board is
          I2C_Conf.General_Call_Enabled := False;
          I2C_Conf.Clock_Stretching_Enabled := True;
 
-         I2C_Conf.Clock_Speed := 100_000;
+         if Port = I2C_3 then
+            I2C_Conf.Clock_Speed := 100_000;
+         else
+            I2C_Conf.Clock_Speed := 400_000;
+         end if;
 
          Configure (Port, I2C_Conf);
       end if;

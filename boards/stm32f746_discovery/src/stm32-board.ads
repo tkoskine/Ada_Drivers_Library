@@ -71,6 +71,31 @@ package STM32.Board is
    procedure Toggle_LEDs (These : in out GPIO_Points)
      renames STM32.GPIO.Toggle;
 
+   --  Arduino port
+
+   ARDUINO_D0  : GPIO_Point renames PC7;
+   ARDUINO_D1  : GPIO_Point renames PC6;
+   ARDUINO_D2  : GPIO_Point renames PG6;
+   ARDUINO_D3  : GPIO_Point renames PB4;
+   ARDUINO_D4  : GPIO_Point renames PG7;
+   ARDUINO_D5  : GPIO_Point renames PA8;
+   ARDUINO_D6  : GPIO_Point renames PH6;
+   ARDUINO_D7  : GPIO_Point renames PI3;
+   ARDUINO_D8  : GPIO_Point renames PI2;
+   ARDUINO_D9  : GPIO_Point renames PA15;
+   ARDUINO_D10 : GPIO_Point renames PI0;
+   ARDUINO_D11 : GPIO_Point renames PB15;
+   ARDUINO_D12 : GPIO_Point renames PB14;
+   ARDUINO_D13 : GPIO_Point renames PI1;
+   ARDUINO_D14 : GPIO_Point renames PB9;
+   ARDUINO_D15 : GPIO_Point renames PB8;
+   ARDUINO_A0  : GPIO_Point renames PA0;
+   ARDUINO_A1  : GPIO_Point renames PF10;
+   ARDUINO_A2  : GPIO_Point renames PF9;
+   ARDUINO_A3  : GPIO_Point renames PF8;
+   ARDUINO_A4  : GPIO_Point renames PF7;
+   ARDUINO_A5  : GPIO_Point renames PF6;
+
    --  GPIO Pins for FMC
 
    FMC_A : constant GPIO_Points :=

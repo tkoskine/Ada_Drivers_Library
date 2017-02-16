@@ -29,14 +29,13 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Interfaces; use Interfaces;
-with HAL;        use HAL;
+with HAL; use HAL;
 
 with Ada.Unchecked_Conversion;
 
 package body STMPE1600 is
 
-   subtype BA_2 is Byte_Array (1 .. 2);
+   subtype BA_2 is UInt8_Array (1 .. 2);
    function To_Pins is new Ada.Unchecked_Conversion (BA_2, STMPE1600_Pins);
    function From_Pins is new Ada.Unchecked_Conversion (STMPE1600_Pins, BA_2);
 
@@ -46,8 +45,8 @@ package body STMPE1600 is
 
    procedure Read
      (This   : STMPE1600_Expander;
-      Reg    : Byte;
-      Data   : out Byte_Array;
+      Reg    : UInt8;
+      Data   : out UInt8_Array;
       Status : out Boolean)
    is
       S : HAL.I2C.I2C_Status;
@@ -69,8 +68,8 @@ package body STMPE1600 is
 
    procedure Write
      (This   : STMPE1600_Expander;
-      Reg    : Byte;
-      Data   : Byte_Array;
+      Reg    : UInt8;
+      Data   : UInt8_Array;
       Status : out Boolean)
    is
       S : HAL.I2C.I2C_Status;
@@ -94,7 +93,7 @@ package body STMPE1600 is
      (This   : in out STMPE1600_Expander;
       Status : out Boolean)
    is
-      Identifier : Byte_Array (1 .. 2);
+      Identifier : UInt8_Array (1 .. 2);
    begin
       Read (This, STMPE1600_REG_ChipID, Identifier, Status);
 
@@ -112,11 +111,11 @@ package body STMPE1600 is
    procedure Set_Interrupt_Enable
      (This     : in out STMPE1600_Expander;
       Enable   : Boolean;
-      Polarity : Pin_Polarity;
+      Polarity : STMPE1600_Pin_Polarity;
       Status   : out Boolean)
    is
       Sys_Ctrl : aliased STMPE1600_SYS_CTRL;
-      BA       : aliased Byte_Array (1 .. 1) with Address => Sys_Ctrl'Address;
+      BA       : aliased UInt8_Array (1 .. 1) with Address => Sys_Ctrl'Address;
    begin
       Read (This, STMPE1600_REG_System_Ctrl, BA, Status);
       if Status then
@@ -135,7 +134,7 @@ package body STMPE1600 is
       Mask : STMPE1600_Pins;
       Status : out Boolean)
    is
-      BA : aliased Byte_Array (1 .. 2) with Address => Mask'Address;
+      BA : aliased UInt8_Array (1 .. 2) with Address => Mask'Address;
    begin
       Write (This, STMPE1600_REG_IEGPIOR_0, BA, Status);
    end Set_Interrupt_Mask;
@@ -147,7 +146,7 @@ package body STMPE1600 is
    function Interrupt_Mask
      (This   : STMPE1600_Expander) return STMPE1600_Pins
    is
-      BA  : aliased Byte_Array (1 .. 2);
+      BA  : aliased UInt8_Array (1 .. 2);
       Status : Boolean;
 
    begin
@@ -162,7 +161,7 @@ package body STMPE1600 is
    function Interrupt_State
      (This : STMPE1600_Expander) return STMPE1600_Pins
    is
-      BA  : aliased Byte_Array (1 .. 2);
+      BA  : aliased UInt8_Array (1 .. 2);
       Status : Boolean;
 
    begin
@@ -177,7 +176,7 @@ package body STMPE1600 is
    function Pins_State
      (This : in out STMPE1600_Expander) return STMPE1600_Pins
    is
-      BA  : aliased Byte_Array (1 .. 2);
+      BA  : aliased UInt8_Array (1 .. 2);
       Status : Boolean;
 
    begin
@@ -206,7 +205,7 @@ package body STMPE1600 is
      (This : in out STMPE1600_Expander;
       Pins : STMPE1600_Pins)
    is
-      BA     : constant Byte_Array (1 .. 2) := From_Pins (Pins);
+      BA     : constant UInt8_Array (1 .. 2) := From_Pins (Pins);
       Status : Boolean with Unreferenced;
 
    begin
@@ -236,7 +235,7 @@ package body STMPE1600 is
      (This      : STMPE1600_Expander;
       Pins      : STMPE1600_Pins_Direction)
    is
-      BA     : aliased Byte_Array (1 .. 2) with Address => Pins'Address;
+      BA     : aliased UInt8_Array (1 .. 2) with Address => Pins'Address;
       Status : Boolean with Unreferenced;
    begin
       Write (This, STMPE1600_REG_GPDR_0, BA, Status);
@@ -249,10 +248,10 @@ package body STMPE1600 is
    procedure Set_Pin_Direction
      (This      : STMPE1600_Expander;
       Pin       : STMPE1600_Pin_Number;
-      Direction : Pin_Direction)
+      Direction : STMPE1600_Pin_Direction)
    is
       Pins      : aliased STMPE1600_Pins;
-      BA        : aliased Byte_Array (1 .. 2) with Address => Pins'Address;
+      BA        : aliased UInt8_Array (1 .. 2) with Address => Pins'Address;
       Status    : Boolean with Unreferenced;
       New_State : constant Boolean := Direction = Output;
 
@@ -267,6 +266,24 @@ package body STMPE1600 is
       Write (This, STMPE1600_REG_GPDR_0, BA, Status);
    end Set_Pin_Direction;
 
+   -------------------
+   -- Pin_Direction --
+   -------------------
+
+   function Pin_Direction
+     (This : STMPE1600_Expander;
+      Pin  : STMPE1600_Pin_Number)
+      return STMPE1600_Pin_Direction
+   is
+      Pins      : aliased STMPE1600_Pins;
+      BA        : aliased UInt8_Array (1 .. 2) with Address => Pins'Address;
+      Status    : Boolean with Unreferenced;
+
+   begin
+      Read (This, STMPE1600_REG_GPDR_0, BA, Status);
+      return (if Pins (Pin) then Output else Input);
+   end Pin_Direction;
+
    --------------------------------
    -- Set_Pin_Polarity_Inversion --
    --------------------------------
@@ -277,7 +294,7 @@ package body STMPE1600 is
       Inversion_State : Boolean)
    is
       Pins      : aliased STMPE1600_Pins;
-      BA        : aliased Byte_Array (1 .. 2) with Address => Pins'Address;
+      BA        : aliased UInt8_Array (1 .. 2) with Address => Pins'Address;
       Status    : Boolean with Unreferenced;
 
    begin
@@ -303,6 +320,33 @@ package body STMPE1600 is
       This.Points (Pin) := (This'Unrestricted_Access, Pin);
       return This.Points (Pin)'Unchecked_Access;
    end As_GPIO_Point;
+
+   ----------
+   -- Mode --
+   ----------
+
+   overriding
+   function Mode (This : STMPE1600_Pin) return HAL.GPIO.GPIO_Mode is
+   begin
+      return (case Pin_Direction (This.Port.all, This.Pin) is
+                 when Input => HAL.GPIO.Input,
+                 when Output => HAL.GPIO.Output);
+   end Mode;
+
+   --------------
+   -- Set_Mode --
+   --------------
+
+   overriding
+   function Set_Mode (This : in out STMPE1600_Pin;
+                      Mode : HAL.GPIO.GPIO_Config_Mode) return Boolean
+   is
+   begin
+      Set_Pin_Direction (This.Port.all, This.Pin, (case Mode is
+                                                      when HAL.GPIO.Input => Input,
+                                                      when HAL.GPIO.Output => Output));
+      return True;
+   end Set_Mode;
 
    ---------
    -- Set --

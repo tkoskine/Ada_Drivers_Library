@@ -34,7 +34,6 @@
 ------------------------------------------------------------------------------
 
 with HAL.I2C;
-with Interfaces; use Interfaces;
 
 package VL53L0X is
 
@@ -105,12 +104,12 @@ package VL53L0X is
 
    function Set_VCSEL_Pulse_Period_Pre_Range
      (This   : VL53L0X_Ranging_Sensor;
-      Period : HAL.Byte) return Boolean;
+      Period : HAL.UInt8) return Boolean;
    --  Default period: 14 PCLKs
 
    function Set_VCSEL_Pulse_Period_Final_Range
      (This   : VL53L0X_Ranging_Sensor;
-      Period : HAL.Byte) return Boolean;
+      Period : HAL.UInt8) return Boolean;
    --  Default period: 10 PCLKs
 
 private
@@ -240,19 +239,19 @@ private
       Pin0_Functionality : VL53L0X_GPIO_Functionality := No_Interrupt;
 
       Final_Range_Timeout_Micro_Seconds : HAL.UInt32 := 0;
-      Final_Range_Vcsel_Pulse_Period    : HAL.Byte := 0;
+      Final_Range_Vcsel_Pulse_Period    : HAL.UInt8 := 0;
       Pre_Range_Timeout_Micro_Seconds   : HAL.UInt32 := 0;
-      Pre_Range_Vcsel_Pulse_Period      : HAL.Byte := 0;
+      Pre_Range_Vcsel_Pulse_Period      : HAL.UInt8 := 0;
 
       Sigma_Est_Ref_Array               : HAL.UInt16 := 0;
       Sigma_Est_Eff_Pulso_Width         : HAL.UInt16 := 0;
       Sigma_Est_Eff_Amb_Width           : HAL.UInt16 := 0;
 
       Read_Data_From_Device_Done        : Boolean := False;
-      Module_Id                         : HAL.Byte;
-      Revision                          : HAL.Byte;
-      Reference_SPAD_Count              : HAL.Byte;
-      Reference_SPAD_Type               : HAL.Byte;
+      Module_Id                         : HAL.UInt8;
+      Revision                          : HAL.UInt8;
+      Reference_SPAD_Count              : HAL.UInt8;
+      Reference_SPAD_Type               : HAL.UInt8;
       Reference_SPADs_Initialised       : Boolean := False;
 
       Part_UID_Upper                    : HAL.UInt32;
@@ -263,58 +262,58 @@ private
    is limited record
       --  Default address: can be changed by software
       I2C_Address            : HAL.I2C.I2C_Address := 16#52#;
-      Stop_Variable          : Unsigned_8;
+      Stop_Variable          : HAL.UInt8;
    end record;
 
    procedure I2C_Write
      (This   : VL53L0X_Ranging_Sensor;
-      Data   : HAL.Byte_Array;
+      Data   : HAL.UInt8_Array;
       Status : out Boolean);
 
    procedure I2C_Read
      (This   : VL53L0X_Ranging_Sensor;
-      Data   : out HAL.Byte_Array;
+      Data   : out HAL.UInt8_Array;
       Status : out Boolean);
 
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : HAL.Byte_Array;
+      Index  : HAL.UInt8;
+      Data   : HAL.UInt8_Array;
       Status : out Boolean);
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : HAL.Byte;
+      Index  : HAL.UInt8;
+      Data   : HAL.UInt8;
       Status : out Boolean);
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : HAL.UInt16;
       Status : out Boolean);
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : HAL.UInt32;
       Status : out Boolean);
 
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : out HAL.Byte_Array;
+      Index  : HAL.UInt8;
+      Data   : out HAL.UInt8_Array;
       Status : out Boolean);
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : out HAL.Byte;
+      Index  : HAL.UInt8;
+      Data   : out HAL.UInt8;
       Status : out Boolean);
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : out HAL.UInt16;
       Status : out Boolean);
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : out HAL.UInt32;
       Status : out Boolean);
 
@@ -324,7 +323,7 @@ private
 
    function Get_SPAD_Info
      (This        : VL53L0X_Ranging_Sensor;
-      SPAD_Count  : out HAL.Byte;
+      SPAD_Count  : out HAL.UInt8;
       Is_Aperture : out Boolean) return Boolean;
 
    type VL53L0x_Sequence_Step is
@@ -346,11 +345,11 @@ private
 
    function Get_VCSel_Pulse_Period
      (This     : VL53L0X_Ranging_Sensor;
-      Sequence : VL53L0x_Sequence_Step) return HAL.Byte;
+      Sequence : VL53L0x_Sequence_Step) return HAL.UInt8;
 
    function Set_VCSel_Pulse_Period
      (This     : VL53L0X_Ranging_Sensor;
-      Period   : HAL.Byte;
+      Period   : HAL.UInt8;
       Sequence : VL53L0x_Sequence_Step) return Boolean;
 
 end VL53L0X;

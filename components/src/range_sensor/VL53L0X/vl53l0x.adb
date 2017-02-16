@@ -60,7 +60,7 @@ package body VL53L0X is
 
    function Perform_Single_Ref_Calibration
      (This     : VL53L0X_Ranging_Sensor;
-      VHV_Init : Byte) return Boolean;
+      VHV_Init : UInt8) return Boolean;
 
    ---------------
    -- I2C_Write --
@@ -68,7 +68,7 @@ package body VL53L0X is
 
    procedure I2C_Write
      (This   : VL53L0X_Ranging_Sensor;
-      Data   : HAL.Byte_Array;
+      Data   : HAL.UInt8_Array;
       Status : out Boolean)
    is
       use type HAL.I2C.I2C_Status;
@@ -88,7 +88,7 @@ package body VL53L0X is
 
    procedure I2C_Read
      (This   : VL53L0X_Ranging_Sensor;
-      Data   : out HAL.Byte_Array;
+      Data   : out HAL.UInt8_Array;
       Status : out Boolean)
    is
       use type HAL.I2C.I2C_Status;
@@ -108,11 +108,11 @@ package body VL53L0X is
 
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : HAL.Byte_Array;
+      Index  : HAL.UInt8;
+      Data   : HAL.UInt8_Array;
       Status : out Boolean)
    is
-      Buf : constant HAL.Byte_Array := (1 => Index) & Data;
+      Buf : constant HAL.UInt8_Array := (1 => Index) & Data;
    begin
       I2C_Write (This, Buf, Status);
    end Write;
@@ -123,8 +123,8 @@ package body VL53L0X is
 
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : HAL.Byte;
+      Index  : HAL.UInt8;
+      Data   : HAL.UInt8;
       Status : out Boolean)
    is
    begin
@@ -137,7 +137,7 @@ package body VL53L0X is
 
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : HAL.UInt16;
       Status : out Boolean)
    is
@@ -145,8 +145,8 @@ package body VL53L0X is
       I2C_Write
         (This,
          (Index,
-          HAL.Byte (Shift_Right (Data, 8)),
-          HAL.Byte (Data and 16#FF#)),
+          HAL.UInt8 (Shift_Right (Data, 8)),
+          HAL.UInt8 (Data and 16#FF#)),
          Status);
    end Write;
 
@@ -156,7 +156,7 @@ package body VL53L0X is
 
    procedure Write
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : HAL.UInt32;
       Status : out Boolean)
    is
@@ -164,10 +164,10 @@ package body VL53L0X is
       I2C_Write
         (This,
          (Index,
-          HAL.Byte (Shift_Right (Data, 24)),
-          HAL.Byte (Shift_Right (Data, 16) and 16#FF#),
-          HAL.Byte (Shift_Right (Data, 8) and 16#FF#),
-          HAL.Byte (Data and 16#FF#)),
+          HAL.UInt8 (Shift_Right (Data, 24)),
+          HAL.UInt8 (Shift_Right (Data, 16) and 16#FF#),
+          HAL.UInt8 (Shift_Right (Data, 8) and 16#FF#),
+          HAL.UInt8 (Data and 16#FF#)),
          Status);
    end Write;
 
@@ -177,8 +177,8 @@ package body VL53L0X is
 
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : out HAL.Byte_Array;
+      Index  : HAL.UInt8;
+      Data   : out HAL.UInt8_Array;
       Status : out Boolean)
    is
    begin
@@ -194,11 +194,11 @@ package body VL53L0X is
 
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
-      Data   : out HAL.Byte;
+      Index  : HAL.UInt8;
+      Data   : out HAL.UInt8;
       Status : out Boolean)
    is
-      Buf : Byte_Array (1 .. 1);
+      Buf : UInt8_Array (1 .. 1);
    begin
       I2C_Write (This, (1 => Index), Status);
       if Status then
@@ -213,11 +213,11 @@ package body VL53L0X is
 
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : out HAL.UInt16;
       Status : out Boolean)
    is
-      Buf : Byte_Array (1 .. 2);
+      Buf : UInt8_Array (1 .. 2);
    begin
       I2C_Write (This, (1 => Index), Status);
       if Status then
@@ -232,11 +232,11 @@ package body VL53L0X is
 
    procedure Read
      (This   : VL53L0X_Ranging_Sensor;
-      Index  : HAL.Byte;
+      Index  : HAL.UInt8;
       Data   : out HAL.UInt32;
       Status : out Boolean)
    is
-      Buf : Byte_Array (1 .. 4);
+      Buf : UInt8_Array (1 .. 4);
    begin
       I2C_Write (This, (1 => Index), Status);
       if Status then
@@ -375,10 +375,10 @@ package body VL53L0X is
      (This : in out VL53L0X_Ranging_Sensor) return Boolean
    is
       Status : Boolean;
-      Regval : Byte;
+      Regval : UInt8;
    begin
       --  Set I2C Standard mode
-      Write (This, 16#88#, Byte'(16#00#), Status);
+      Write (This, 16#88#, UInt8'(16#00#), Status);
 
       if not Status then
          return False;
@@ -398,25 +398,25 @@ package body VL53L0X is
 
       --  TODO: Sigma estimator variable
       if Status then
-         Write (This, 16#80#, Byte'(16#01#), Status);
+         Write (This, 16#80#, UInt8'(16#01#), Status);
       end if;
       if Status then
-         Write (This, 16#FF#, Byte'(16#01#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
       end if;
       if Status then
-         Write (This, 16#00#, Byte'(16#00#), Status);
+         Write (This, 16#00#, UInt8'(16#00#), Status);
       end if;
       if Status then
          Read (This, 16#91#, This.Stop_Variable, Status);
       end if;
       if Status then
-         Write (This, 16#00#, Byte'(16#01#), Status);
+         Write (This, 16#00#, UInt8'(16#01#), Status);
       end if;
       if Status then
-         Write (This, 16#FF#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
       end if;
       if Status then
-         Write (This, 16#80#, Byte'(16#00#), Status);
+         Write (This, 16#80#, UInt8'(16#00#), Status);
       end if;
 
       --  disable SIGNAL_RATE_MSRC (bit 1) and SIGNAL_RATE_PRE_RANGE (bit 4)
@@ -435,7 +435,7 @@ package body VL53L0X is
       end if;
 
       if Status then
-         Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#FF#), Status);
+         Write (This, REG_SYSTEM_SEQUENCE_CONFIG, UInt8'(16#FF#), Status);
       end if;
 
       return Status;
@@ -448,21 +448,21 @@ package body VL53L0X is
    function Static_Init
      (This : in out VL53L0X_Ranging_Sensor) return Boolean
    is
-      type SPAD_Map is array (Byte range 1 .. 48) of Boolean
+      type SPAD_Map is array (UInt8 range 1 .. 48) of Boolean
         with Pack, Size => 48;
-      subtype SPAD_Map_Bytes is Byte_Array (1 .. 6);
+      subtype SPAD_Map_Bytes is UInt8_Array (1 .. 6);
       function To_Map is new Ada.Unchecked_Conversion
         (SPAD_Map_Bytes, SPAD_Map);
       function To_Bytes is new Ada.Unchecked_Conversion
         (SPAD_Map, SPAD_Map_Bytes);
 
-      SPAD_Count                : Byte;
+      SPAD_Count                : UInt8;
       SPAD_Is_Aperture          : Boolean;
       Status                    : Boolean;
       Ref_SPAD_Map_Bytes        : SPAD_Map_Bytes;
       Ref_SPAD_Map              : SPAD_Map;
-      First_SPAD                : Byte;
-      SPADS_Enabled             : Byte;
+      First_SPAD                : UInt8;
+      SPADS_Enabled             : UInt8;
       Measurement_Timing_Budget : UInt32;
 
    begin
@@ -477,22 +477,22 @@ package body VL53L0X is
 
       --  Set reference spads
       if Status then
-         Write (This, 16#FF#, Byte'(16#01#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
       end if;
       if Status then
          Write (This, REG_DYNAMIC_SPAD_REF_EN_START_OFFSET,
-                Byte'(16#00#), Status);
+                UInt8'(16#00#), Status);
       end if;
       if Status then
          Write (This, REG_DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD,
-                Byte'(16#2C#), Status);
+                UInt8'(16#2C#), Status);
       end if;
       if Status then
-         Write (This, 16#FF#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
       end if;
       if Status then
          Write (This, REG_GLOBAL_CONFIG_REF_EN_START_SELECT,
-                Byte'(16#B4#), Status);
+                UInt8'(16#B4#), Status);
       end if;
 
       if Status then
@@ -504,7 +504,7 @@ package body VL53L0X is
 
          SPADS_Enabled := 0;
 
-         for J in Byte range 1 .. 48 loop
+         for J in UInt8 range 1 .. 48 loop
 
             if J < First_SPAD or else SPADS_Enabled = SPAD_Count then
                --  This bit is lower than the first one that should be enabled,
@@ -527,99 +527,99 @@ package body VL53L0X is
       --  Load tuning Settings
       --  default tuning settings from vl53l0x_tuning.h
       if Status then
-         Write (This, 16#FF#, Byte'(16#01#), Status);
-         Write (This, 16#00#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
+         Write (This, 16#00#, UInt8'(16#00#), Status);
 
-         Write (This, 16#FF#, Byte'(16#00#), Status);
-         Write (This, 16#09#, Byte'(16#00#), Status);
-         Write (This, 16#10#, Byte'(16#00#), Status);
-         Write (This, 16#11#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
+         Write (This, 16#09#, UInt8'(16#00#), Status);
+         Write (This, 16#10#, UInt8'(16#00#), Status);
+         Write (This, 16#11#, UInt8'(16#00#), Status);
 
-         Write (This, 16#24#, Byte'(16#01#), Status);
-         Write (This, 16#25#, Byte'(16#FF#), Status);
-         Write (This, 16#75#, Byte'(16#00#), Status);
+         Write (This, 16#24#, UInt8'(16#01#), Status);
+         Write (This, 16#25#, UInt8'(16#FF#), Status);
+         Write (This, 16#75#, UInt8'(16#00#), Status);
 
-         Write (This, 16#FF#, Byte'(16#01#), Status);
-         Write (This, 16#4E#, Byte'(16#2C#), Status);
-         Write (This, 16#48#, Byte'(16#00#), Status);
-         Write (This, 16#30#, Byte'(16#20#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
+         Write (This, 16#4E#, UInt8'(16#2C#), Status);
+         Write (This, 16#48#, UInt8'(16#00#), Status);
+         Write (This, 16#30#, UInt8'(16#20#), Status);
 
-         Write (This, 16#FF#, Byte'(16#00#), Status);
-         Write (This, 16#30#, Byte'(16#09#), Status);
-         Write (This, 16#54#, Byte'(16#00#), Status);
-         Write (This, 16#31#, Byte'(16#04#), Status);
-         Write (This, 16#32#, Byte'(16#03#), Status);
-         Write (This, 16#40#, Byte'(16#83#), Status);
-         Write (This, 16#46#, Byte'(16#25#), Status);
-         Write (This, 16#60#, Byte'(16#00#), Status);
-         Write (This, 16#27#, Byte'(16#00#), Status);
-         Write (This, 16#50#, Byte'(16#06#), Status);
-         Write (This, 16#51#, Byte'(16#00#), Status);
-         Write (This, 16#52#, Byte'(16#96#), Status);
-         Write (This, 16#56#, Byte'(16#08#), Status);
-         Write (This, 16#57#, Byte'(16#30#), Status);
-         Write (This, 16#61#, Byte'(16#00#), Status);
-         Write (This, 16#62#, Byte'(16#00#), Status);
-         Write (This, 16#64#, Byte'(16#00#), Status);
-         Write (This, 16#65#, Byte'(16#00#), Status);
-         Write (This, 16#66#, Byte'(16#A0#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
+         Write (This, 16#30#, UInt8'(16#09#), Status);
+         Write (This, 16#54#, UInt8'(16#00#), Status);
+         Write (This, 16#31#, UInt8'(16#04#), Status);
+         Write (This, 16#32#, UInt8'(16#03#), Status);
+         Write (This, 16#40#, UInt8'(16#83#), Status);
+         Write (This, 16#46#, UInt8'(16#25#), Status);
+         Write (This, 16#60#, UInt8'(16#00#), Status);
+         Write (This, 16#27#, UInt8'(16#00#), Status);
+         Write (This, 16#50#, UInt8'(16#06#), Status);
+         Write (This, 16#51#, UInt8'(16#00#), Status);
+         Write (This, 16#52#, UInt8'(16#96#), Status);
+         Write (This, 16#56#, UInt8'(16#08#), Status);
+         Write (This, 16#57#, UInt8'(16#30#), Status);
+         Write (This, 16#61#, UInt8'(16#00#), Status);
+         Write (This, 16#62#, UInt8'(16#00#), Status);
+         Write (This, 16#64#, UInt8'(16#00#), Status);
+         Write (This, 16#65#, UInt8'(16#00#), Status);
+         Write (This, 16#66#, UInt8'(16#A0#), Status);
 
-         Write (This, 16#FF#, Byte'(16#01#), Status);
-         Write (This, 16#22#, Byte'(16#32#), Status);
-         Write (This, 16#47#, Byte'(16#14#), Status);
-         Write (This, 16#49#, Byte'(16#FF#), Status);
-         Write (This, 16#4A#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
+         Write (This, 16#22#, UInt8'(16#32#), Status);
+         Write (This, 16#47#, UInt8'(16#14#), Status);
+         Write (This, 16#49#, UInt8'(16#FF#), Status);
+         Write (This, 16#4A#, UInt8'(16#00#), Status);
 
-         Write (This, 16#FF#, Byte'(16#00#), Status);
-         Write (This, 16#7A#, Byte'(16#0A#), Status);
-         Write (This, 16#7B#, Byte'(16#00#), Status);
-         Write (This, 16#78#, Byte'(16#21#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
+         Write (This, 16#7A#, UInt8'(16#0A#), Status);
+         Write (This, 16#7B#, UInt8'(16#00#), Status);
+         Write (This, 16#78#, UInt8'(16#21#), Status);
 
-         Write (This, 16#FF#, Byte'(16#01#), Status);
-         Write (This, 16#23#, Byte'(16#34#), Status);
-         Write (This, 16#42#, Byte'(16#00#), Status);
-         Write (This, 16#44#, Byte'(16#FF#), Status);
-         Write (This, 16#45#, Byte'(16#26#), Status);
-         Write (This, 16#46#, Byte'(16#05#), Status);
-         Write (This, 16#40#, Byte'(16#40#), Status);
-         Write (This, 16#0E#, Byte'(16#06#), Status);
-         Write (This, 16#20#, Byte'(16#1A#), Status);
-         Write (This, 16#43#, Byte'(16#40#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
+         Write (This, 16#23#, UInt8'(16#34#), Status);
+         Write (This, 16#42#, UInt8'(16#00#), Status);
+         Write (This, 16#44#, UInt8'(16#FF#), Status);
+         Write (This, 16#45#, UInt8'(16#26#), Status);
+         Write (This, 16#46#, UInt8'(16#05#), Status);
+         Write (This, 16#40#, UInt8'(16#40#), Status);
+         Write (This, 16#0E#, UInt8'(16#06#), Status);
+         Write (This, 16#20#, UInt8'(16#1A#), Status);
+         Write (This, 16#43#, UInt8'(16#40#), Status);
 
-         Write (This, 16#FF#, Byte'(16#00#), Status);
-         Write (This, 16#34#, Byte'(16#03#), Status);
-         Write (This, 16#35#, Byte'(16#44#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
+         Write (This, 16#34#, UInt8'(16#03#), Status);
+         Write (This, 16#35#, UInt8'(16#44#), Status);
 
-         Write (This, 16#FF#, Byte'(16#01#), Status);
-         Write (This, 16#31#, Byte'(16#04#), Status);
-         Write (This, 16#4B#, Byte'(16#09#), Status);
-         Write (This, 16#4C#, Byte'(16#05#), Status);
-         Write (This, 16#4D#, Byte'(16#04#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
+         Write (This, 16#31#, UInt8'(16#04#), Status);
+         Write (This, 16#4B#, UInt8'(16#09#), Status);
+         Write (This, 16#4C#, UInt8'(16#05#), Status);
+         Write (This, 16#4D#, UInt8'(16#04#), Status);
 
-         Write (This, 16#FF#, Byte'(16#00#), Status);
-         Write (This, 16#44#, Byte'(16#00#), Status);
-         Write (This, 16#45#, Byte'(16#20#), Status);
-         Write (This, 16#47#, Byte'(16#08#), Status);
-         Write (This, 16#48#, Byte'(16#28#), Status);
-         Write (This, 16#67#, Byte'(16#00#), Status);
-         Write (This, 16#70#, Byte'(16#04#), Status);
-         Write (This, 16#71#, Byte'(16#01#), Status);
-         Write (This, 16#72#, Byte'(16#FE#), Status);
-         Write (This, 16#76#, Byte'(16#00#), Status);
-         Write (This, 16#77#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
+         Write (This, 16#44#, UInt8'(16#00#), Status);
+         Write (This, 16#45#, UInt8'(16#20#), Status);
+         Write (This, 16#47#, UInt8'(16#08#), Status);
+         Write (This, 16#48#, UInt8'(16#28#), Status);
+         Write (This, 16#67#, UInt8'(16#00#), Status);
+         Write (This, 16#70#, UInt8'(16#04#), Status);
+         Write (This, 16#71#, UInt8'(16#01#), Status);
+         Write (This, 16#72#, UInt8'(16#FE#), Status);
+         Write (This, 16#76#, UInt8'(16#00#), Status);
+         Write (This, 16#77#, UInt8'(16#00#), Status);
 
-         Write (This, 16#FF#, Byte'(16#01#), Status);
-         Write (This, 16#0D#, Byte'(16#01#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
+         Write (This, 16#0D#, UInt8'(16#01#), Status);
 
-         Write (This, 16#FF#, Byte'(16#00#), Status);
-         Write (This, 16#80#, Byte'(16#01#), Status);
-         Write (This, 16#01#, Byte'(16#F8#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
+         Write (This, 16#80#, UInt8'(16#01#), Status);
+         Write (This, 16#01#, UInt8'(16#F8#), Status);
 
-         Write (This, 16#FF#, Byte'(16#01#), Status);
-         Write (This, 16#8E#, Byte'(16#01#), Status);
-         Write (This, 16#00#, Byte'(16#01#), Status);
-         Write (This, 16#FF#, Byte'(16#00#), Status);
-         Write (This, 16#80#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
+         Write (This, 16#8E#, UInt8'(16#01#), Status);
+         Write (This, 16#00#, UInt8'(16#01#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
+         Write (This, 16#80#, UInt8'(16#00#), Status);
       end if;
 
       Status := Set_GPIO_Config (This, New_Sample_Ready, Polarity_High);
@@ -634,7 +634,7 @@ package body VL53L0X is
       --  MSRC = Minimum Signal Rate Check
       --  TCC  = Target CenterCheck
 
-      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#E8#), Status);
+      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, UInt8'(16#E8#), Status);
 
       if not Status then
          return False;
@@ -653,9 +653,9 @@ package body VL53L0X is
 
    function Perform_Single_Ref_Calibration
      (This     : VL53L0X_Ranging_Sensor;
-      VHV_Init : Byte) return Boolean
+      VHV_Init : UInt8) return Boolean
    is
-      Val    : Byte;
+      Val    : UInt8;
       Status : Boolean;
    begin
       Write (This, REG_SYSRANGE_START, VHV_Init or 16#01#, Status);
@@ -674,12 +674,12 @@ package body VL53L0X is
          return False;
       end if;
 
-      Write (This, REG_SYSTEM_INTERRUPT_CLEAR, Byte'(16#01#), Status);
+      Write (This, REG_SYSTEM_INTERRUPT_CLEAR, UInt8'(16#01#), Status);
       if not Status then
          return False;
       end if;
 
-      Write (This, REG_SYSRANGE_START, Byte'(16#00#), Status);
+      Write (This, REG_SYSRANGE_START, UInt8'(16#00#), Status);
 
       return Status;
    end Perform_Single_Ref_Calibration;
@@ -694,7 +694,7 @@ package body VL53L0X is
       Status : Boolean;
    begin
       --  VHV calibration
-      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#01#), Status);
+      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, UInt8'(16#01#), Status);
 
       if not Status then
          return False;
@@ -707,7 +707,7 @@ package body VL53L0X is
       end if;
 
       --  Phase calibration
-      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#02#), Status);
+      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, UInt8'(16#02#), Status);
 
       if not Status then
          return False;
@@ -720,7 +720,7 @@ package body VL53L0X is
       end if;
 
       --  Restore the sequence config
-      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#E8#), Status);
+      Write (This, REG_SYSTEM_SEQUENCE_CONFIG, UInt8'(16#E8#), Status);
 
       return Status;
    end Perform_Ref_Calibration;
@@ -733,31 +733,31 @@ package body VL53L0X is
      (This : VL53L0X_Ranging_Sensor) return HAL.UInt16
    is
       Status : Boolean;
-      Val    : Byte;
+      Val    : UInt8;
       Ret    : HAL.UInt16;
    begin
-      Write (This, 16#80#, Byte'(16#01#), Status);
+      Write (This, 16#80#, UInt8'(16#01#), Status);
       if Status then
-         Write (This, 16#FF#, Byte'(16#01#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
       end if;
       if Status then
-         Write (This, 16#00#, Byte'(16#00#), Status);
+         Write (This, 16#00#, UInt8'(16#00#), Status);
       end if;
       if Status then
          Write (This, 16#91#, This.Stop_Variable, Status);
       end if;
       if Status then
-         Write (This, 16#00#, Byte'(16#01#), Status);
+         Write (This, 16#00#, UInt8'(16#01#), Status);
       end if;
       if Status then
-         Write (This, 16#FF#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
       end if;
       if Status then
-         Write (This, 16#80#, Byte'(16#00#), Status);
+         Write (This, 16#80#, UInt8'(16#00#), Status);
       end if;
 
       if Status then
-         Write (This, REG_SYSRANGE_START, Byte'(16#01#), Status);
+         Write (This, REG_SYSRANGE_START, UInt8'(16#01#), Status);
       end if;
 
       if not Status then
@@ -777,7 +777,7 @@ package body VL53L0X is
       end loop;
 
       Read (This, REG_RESULT_RANGE_STATUS + 10, Ret, Status);
-      Write (This, REG_SYSTEM_INTERRUPT_CLEAR, Byte'(16#01#), Status);
+      Write (This, REG_SYSTEM_INTERRUPT_CLEAR, UInt8'(16#01#), Status);
 
       return Ret;
    end Read_Range_Single_Millimeters;
@@ -792,8 +792,8 @@ package body VL53L0X is
       Polarity      : VL53L0X_Interrupt_Polarity) return Boolean
    is
       Status : Boolean;
-      Data   : Byte;
-      Tmp    : Byte;
+      Data   : UInt8;
+      Tmp    : UInt8;
    begin
       case Functionality is
          when No_Interrupt =>
@@ -840,12 +840,12 @@ package body VL53L0X is
      (This : VL53L0X_Ranging_Sensor)
    is
       Status : Boolean;
-      Tmp    : Byte;
+      Tmp    : UInt8;
    begin
       for J in 1 .. 3 loop
-         Write (This, REG_SYSTEM_INTERRUPT_CLEAR, Byte'(16#01#), Status);
+         Write (This, REG_SYSTEM_INTERRUPT_CLEAR, UInt8'(16#01#), Status);
          exit when not Status;
-         Write (This, REG_SYSTEM_INTERRUPT_CLEAR, Byte'(16#00#), Status);
+         Write (This, REG_SYSTEM_INTERRUPT_CLEAR, UInt8'(16#00#), Status);
          exit when not Status;
          Read (This, REG_RESULT_INTERRUPT_STATUS, Tmp, Status);
          exit when not Status;
@@ -861,12 +861,12 @@ package body VL53L0X is
      (This : VL53L0X_Ranging_Sensor) return VL53L0x_Sequence_Step_Enabled
    is
       Sequence_Steps  : VL53L0x_Sequence_Step_Enabled;
-      Sequence_Config : Byte := 0;
+      Sequence_Config : UInt8 := 0;
       Status          : Boolean;
 
       function Sequence_Step_Enabled
         (Step            : VL53L0x_Sequence_Step;
-         Sequence_Config : Byte) return Boolean;
+         Sequence_Config : UInt8) return Boolean;
 
       ---------------------------
       -- Sequence_Step_Enabled --
@@ -874,7 +874,7 @@ package body VL53L0X is
 
       function Sequence_Step_Enabled
         (Step            : VL53L0x_Sequence_Step;
-         Sequence_Config : Byte) return Boolean
+         Sequence_Config : UInt8) return Boolean
       is
       begin
          case Step is
@@ -915,8 +915,8 @@ package body VL53L0X is
       Step     : VL53L0x_Sequence_Step;
       As_Mclks : Boolean := False) return UInt32
    is
-      VCSel_Pulse_Period_Pclk : Byte;
-      Encoded_Byte            : Byte;
+      VCSel_Pulse_Period_Pclk : UInt8;
+      Encoded_UInt8           : UInt8;
       Encoded_UInt16          : UInt16;
       Status                  : Boolean;
       Timeout_Mclks           : UInt32;
@@ -926,9 +926,9 @@ package body VL53L0X is
       case Step is
          when TCC | DSS | MSRC =>
             Read (This, REG_MSRC_CONFIG_TIMEOUT_MACROP,
-                  Encoded_Byte, Status);
+                  Encoded_UInt8, Status);
             if Status then
-               Timeout_Mclks := Decode_Timeout (UInt16 (Encoded_Byte));
+               Timeout_Mclks := Decode_Timeout (UInt16 (Encoded_UInt8));
             end if;
 
             if As_Mclks then
@@ -1101,7 +1101,7 @@ package body VL53L0X is
       end if;
 
       declare
-         VCSel_Pulse_Period_Pclk : Byte;
+         VCSel_Pulse_Period_Pclk : UInt8;
          Encoded_UInt16          : UInt16;
          Timeout_Mclks           : UInt32;
       begin
@@ -1161,22 +1161,22 @@ package body VL53L0X is
 
    function Get_SPAD_Info
      (This        : VL53L0X_Ranging_Sensor;
-      SPAD_Count  : out HAL.Byte;
+      SPAD_Count  : out HAL.UInt8;
       Is_Aperture : out Boolean) return Boolean
    is
       Status : Boolean;
-      Tmp    : Byte;
+      Tmp    : UInt8;
    begin
-      Write (This, 16#80#, Byte'(16#01#), Status);
+      Write (This, 16#80#, UInt8'(16#01#), Status);
       if Status then
-         Write (This, 16#FF#, Byte'(16#01#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
       end if;
       if Status then
-         Write (This, 16#00#, Byte'(16#00#), Status);
+         Write (This, 16#00#, UInt8'(16#00#), Status);
       end if;
 
       if Status then
-         Write (This, 16#FF#, Byte'(16#06#), Status);
+         Write (This, 16#FF#, UInt8'(16#06#), Status);
       end if;
       if Status then
          Read (This, 16#83#, Tmp, Status);
@@ -1186,21 +1186,21 @@ package body VL53L0X is
       end if;
 
       if Status then
-         Write (This, 16#FF#, Byte'(16#07#), Status);
+         Write (This, 16#FF#, UInt8'(16#07#), Status);
       end if;
       if Status then
-         Write (This, 16#81#, Byte'(16#01#), Status);
-      end if;
-
-      if Status then
-         Write (This, 16#80#, Byte'(16#01#), Status);
+         Write (This, 16#81#, UInt8'(16#01#), Status);
       end if;
 
       if Status then
-         Write (This, 16#94#, Byte'(16#6B#), Status);
+         Write (This, 16#80#, UInt8'(16#01#), Status);
+      end if;
+
+      if Status then
+         Write (This, 16#94#, UInt8'(16#6B#), Status);
       end if;
       if Status then
-         Write (This, 16#83#, Byte'(16#00#), Status);
+         Write (This, 16#83#, UInt8'(16#00#), Status);
       end if;
 
       loop
@@ -1210,7 +1210,7 @@ package body VL53L0X is
       end loop;
 
       if Status then
-         Write (This, 16#83#, Byte'(16#01#), Status);
+         Write (This, 16#83#, UInt8'(16#01#), Status);
       end if;
       if Status then
          Read (This, 16#92#, Tmp, Status);
@@ -1220,10 +1220,10 @@ package body VL53L0X is
          SPAD_Count := Tmp and 16#7F#;
          Is_Aperture := (Tmp and 16#80#) /= 0;
 
-         Write (This, 16#81#, Byte'(16#00#), Status);
+         Write (This, 16#81#, UInt8'(16#00#), Status);
       end if;
       if Status then
-         Write (This, 16#FF#, Byte'(16#06#), Status);
+         Write (This, 16#FF#, UInt8'(16#06#), Status);
       end if;
       if Status then
          Read (This, 16#83#, Tmp, Status);
@@ -1232,17 +1232,17 @@ package body VL53L0X is
          Write (This, 16#83#, Tmp and not 16#04#, Status);
       end if;
       if Status then
-         Write (This, 16#FF#, Byte'(16#01#), Status);
+         Write (This, 16#FF#, UInt8'(16#01#), Status);
       end if;
       if Status then
-         Write (This, 16#00#, Byte'(16#01#), Status);
+         Write (This, 16#00#, UInt8'(16#01#), Status);
       end if;
 
       if Status then
-         Write (This, 16#FF#, Byte'(16#00#), Status);
+         Write (This, 16#FF#, UInt8'(16#00#), Status);
       end if;
       if Status then
-         Write (This, 16#80#, Byte'(16#00#), Status);
+         Write (This, 16#80#, UInt8'(16#00#), Status);
       end if;
 
       return Status;
@@ -1273,7 +1273,7 @@ package body VL53L0X is
 
    function Set_VCSEL_Pulse_Period_Pre_Range
      (This   : VL53L0X_Ranging_Sensor;
-      Period : Byte) return Boolean
+      Period : UInt8) return Boolean
    is
    begin
       return Set_VCSel_Pulse_Period (This, Period, Pre_Range);
@@ -1285,7 +1285,7 @@ package body VL53L0X is
 
    function Set_VCSEL_Pulse_Period_Final_Range
      (This   : VL53L0X_Ranging_Sensor;
-      Period : Byte) return Boolean
+      Period : UInt8) return Boolean
    is
    begin
       return Set_VCSel_Pulse_Period (This, Period, Final_Range);
@@ -1297,11 +1297,11 @@ package body VL53L0X is
 
    function Set_VCSel_Pulse_Period
      (This     : VL53L0X_Ranging_Sensor;
-      Period   : Byte;
+      Period   : UInt8;
       Sequence : VL53L0x_Sequence_Step) return Boolean
    is
-      Encoded       : constant Byte := Shift_Right (Period, 1) - 1;
-      Phase_High    : Byte;
+      Encoded       : constant UInt8 := Shift_Right (Period, 1) - 1;
+      Phase_High    : UInt8;
       Status        : Boolean;
       Pre_Timeout   : UInt32;
       Final_Timeout : UInt32;
@@ -1310,7 +1310,7 @@ package body VL53L0X is
       Steps_Enabled : constant VL53L0x_Sequence_Step_Enabled :=
                         Get_Sequence_Step_Enabled (This);
       Budget        : UInt32;
-      Sequence_Cfg  : Byte;
+      Sequence_Cfg  : UInt8;
 
    begin
       --  Save the measurement timing budget
@@ -1341,7 +1341,7 @@ package body VL53L0X is
             end if;
 
             Write (This, REG_PRE_RANGE_CONFIG_VALID_PHASE_LOW,
-                   Byte'(16#08#), Status);
+                   UInt8'(16#08#), Status);
             if not Status then
                return False;
             end if;
@@ -1365,7 +1365,7 @@ package body VL53L0X is
             end if;
 
             Write (This, REG_MSRC_CONFIG_TIMEOUT_MACROP,
-                   Byte (Timeout_Mclks), Status);
+                   UInt8 (Timeout_Mclks), Status);
 
          when Final_Range =>
             Pre_Timeout := Sequence_Step_Timeout
@@ -1373,10 +1373,10 @@ package body VL53L0X is
             Final_Timeout := Sequence_Step_Timeout (This, Final_Range);
 
             declare
-               Phase_High  : Byte;
-               Width       : Byte;
-               Cal_Timeout : Byte;
-               Cal_Lim     : Byte;
+               Phase_High  : UInt8;
+               Width       : UInt8;
+               Cal_Timeout : UInt8;
+               Cal_Lim     : UInt8;
             begin
                case Period is
                   when 8 =>
@@ -1410,7 +1410,7 @@ package body VL53L0X is
                end if;
 
                Write (This, REG_FINAL_RANGE_CONFIG_VALID_PHASE_LOW,
-                      Byte'(16#08#), Status);
+                      UInt8'(16#08#), Status);
                if not Status then
                   return False;
                end if;
@@ -1427,10 +1427,10 @@ package body VL53L0X is
                   return False;
                end if;
 
-               Write (This, 16#FF#, Byte'(16#01#), Status);
+               Write (This, 16#FF#, UInt8'(16#01#), Status);
                Write (This, REG_ALGO_PHASECAL_LIM,
                       Cal_Lim, Status);
-               Write (This, 16#FF#, Byte'(16#00#), Status);
+               Write (This, 16#FF#, UInt8'(16#00#), Status);
                if not Status then
                   return False;
                end if;
@@ -1464,7 +1464,7 @@ package body VL53L0X is
       Read (This, REG_SYSTEM_SEQUENCE_CONFIG, Sequence_Cfg, Status);
 
       if Status then
-         Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#02#), Status);
+         Write (This, REG_SYSTEM_SEQUENCE_CONFIG, UInt8'(16#02#), Status);
       end if;
       if Status then
          Status := Perform_Single_Ref_Calibration (This, 16#00#);
@@ -1482,9 +1482,9 @@ package body VL53L0X is
 
    function Get_VCSel_Pulse_Period
      (This     : VL53L0X_Ranging_Sensor;
-      Sequence : VL53L0x_Sequence_Step) return Byte
+      Sequence : VL53L0x_Sequence_Step) return UInt8
    is
-      Ret    : Byte;
+      Ret    : UInt8;
       Status : Boolean;
    begin
       case Sequence is

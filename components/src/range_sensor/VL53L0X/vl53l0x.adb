@@ -50,6 +50,18 @@ package body VL53L0X is
    function Decode_Timeout (Encoded : UInt16) return UInt32;
    function Encode_Timeout (Timeout : UInt32) return UInt16;
 
+   function To_Timeout_Microseconds
+     (Timeout_Period_Mclks : UInt32;
+      VCSel_Period_Pclks   : UInt8) return UInt32;
+
+   function To_Timeout_Mclks
+     (Timeout_Period_us  : UInt32;
+      VCSel_Period_Pclks : UInt8) return UInt32;
+
+   function Perform_Single_Ref_Calibration
+     (This     : VL53L0X_Ranging_Sensor;
+      VHV_Init : Byte) return Boolean;
+
    ---------------
    -- I2C_Write --
    ---------------
@@ -266,6 +278,49 @@ package body VL53L0X is
 
       return UInt16 (Shift_Left (MSByte, 8) or LSByte);
    end Encode_Timeout;
+
+   ----------------------
+   -- To_Timeout_Mclks --
+   ----------------------
+
+   function To_Timeout_Mclks
+     (Timeout_Period_us  : UInt32;
+      VCSel_Period_Pclks : UInt8) return UInt32
+   is
+      PLL_Period_Ps        : constant := 1655;
+      Macro_Period_Vclks   : constant := 2304;
+      Macro_Period_Ps      : UInt32;
+      Macro_Period_Ns      : UInt32;
+
+   begin
+      Macro_Period_Ps :=
+        UInt32 (VCSel_Period_Pclks) * PLL_Period_Ps * Macro_Period_Vclks;
+      Macro_Period_Ns := (Macro_Period_Ps + 500) / 1000;
+
+      return
+        (Timeout_Period_us * 1000 + Macro_Period_Ns / 2) / Macro_Period_Ns;
+   end To_Timeout_Mclks;
+
+   -----------------------------
+   -- To_Timeout_Microseconds --
+   -----------------------------
+
+   function To_Timeout_Microseconds
+     (Timeout_Period_Mclks : UInt32;
+      VCSel_Period_Pclks   : UInt8) return UInt32
+   is
+      PLL_Period_Ps        : constant := 1655;
+      Macro_Period_Vclks   : constant := 2304;
+      Macro_Period_Ps      : UInt32;
+      Macro_Period_Ns      : UInt32;
+
+   begin
+      Macro_Period_Ps :=
+        UInt32 (VCSel_Period_Pclks) * PLL_Period_Ps * Macro_Period_Vclks;
+      Macro_Period_Ns := (Macro_Period_Ps + 500) / 1000;
+
+      return (Timeout_Period_Mclks * Macro_Period_Ns + 500) / 1000;
+   end To_Timeout_Microseconds;
 
    ----------------
    -- Initialize --
@@ -592,6 +647,43 @@ package body VL53L0X is
       return Status;
    end Static_Init;
 
+   ------------------------------------
+   -- Perform_Single_Ref_Calibration --
+   ------------------------------------
+
+   function Perform_Single_Ref_Calibration
+     (This     : VL53L0X_Ranging_Sensor;
+      VHV_Init : Byte) return Boolean
+   is
+      Val    : Byte;
+      Status : Boolean;
+   begin
+      Write (This, REG_SYSRANGE_START, VHV_Init or 16#01#, Status);
+
+      if not Status then
+         return False;
+      end if;
+
+      loop
+         Read (This, REG_RESULT_INTERRUPT_STATUS, Val, Status);
+         exit when not Status;
+         exit when (Val and 16#07#) /= 0;
+      end loop;
+
+      if not Status then
+         return False;
+      end if;
+
+      Write (This, REG_SYSTEM_INTERRUPT_CLEAR, Byte'(16#01#), Status);
+      if not Status then
+         return False;
+      end if;
+
+      Write (This, REG_SYSRANGE_START, Byte'(16#00#), Status);
+
+      return Status;
+   end Perform_Single_Ref_Calibration;
+
    -----------------------------
    -- Perform_Ref_Calibration --
    -----------------------------
@@ -600,36 +692,6 @@ package body VL53L0X is
      (This : in out VL53L0X_Ranging_Sensor) return Boolean
    is
       Status : Boolean;
-
-      procedure Perform_Single_Ref_Calibration (VHV_Init : Byte);
-
-      ------------------------------------
-      -- Perform_Single_Ref_Calibration --
-      ------------------------------------
-
-      procedure Perform_Single_Ref_Calibration (VHV_Init : Byte)
-      is
-         Val : Byte;
-      begin
-         Write (This, REG_SYSRANGE_START, VHV_Init or 16#01#, Status);
-
-         if not Status then
-            return;
-         end if;
-
-         loop
-            Read (This, REG_RESULT_INTERRUPT_STATUS, Val, Status);
-            exit when not Status;
-            exit when (Val and 16#07#) /= 0;
-         end loop;
-
-         if not Status then
-            return;
-         end if;
-
-         Write (This, REG_SYSTEM_INTERRUPT_CLEAR, Byte'(16#01#), Status);
-         Write (This, REG_SYSRANGE_START, Byte'(16#00#), Status);
-      end Perform_Single_Ref_Calibration;
    begin
       --  VHV calibration
       Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#01#), Status);
@@ -638,7 +700,7 @@ package body VL53L0X is
          return False;
       end if;
 
-      Perform_Single_Ref_Calibration (16#40#);
+      Status := Perform_Single_Ref_Calibration (This, 16#40#);
 
       if not Status then
          return False;
@@ -651,7 +713,7 @@ package body VL53L0X is
          return False;
       end if;
 
-      Perform_Single_Ref_Calibration (16#00#);
+      Status := Perform_Single_Ref_Calibration (This, 16#00#);
 
       if not Status then
          return False;
@@ -675,14 +737,28 @@ package body VL53L0X is
       Ret    : HAL.UInt16;
    begin
       Write (This, 16#80#, Byte'(16#01#), Status);
-      Write (This, 16#FF#, Byte'(16#01#), Status);
-      Write (This, 16#00#, Byte'(16#00#), Status);
-      Write (This, 16#91#, This.Stop_Variable, Status);
-      Write (This, 16#00#, Byte'(16#01#), Status);
-      Write (This, 16#FF#, Byte'(16#00#), Status);
-      Write (This, 16#80#, Byte'(16#00#), Status);
+      if Status then
+         Write (This, 16#FF#, Byte'(16#01#), Status);
+      end if;
+      if Status then
+         Write (This, 16#00#, Byte'(16#00#), Status);
+      end if;
+      if Status then
+         Write (This, 16#91#, This.Stop_Variable, Status);
+      end if;
+      if Status then
+         Write (This, 16#00#, Byte'(16#01#), Status);
+      end if;
+      if Status then
+         Write (This, 16#FF#, Byte'(16#00#), Status);
+      end if;
+      if Status then
+         Write (This, 16#80#, Byte'(16#00#), Status);
+      end if;
 
-      Write (This, REG_SYSRANGE_START, Byte'(16#01#), Status);
+      if Status then
+         Write (This, REG_SYSRANGE_START, Byte'(16#01#), Status);
+      end if;
 
       if not Status then
          return 0;
@@ -835,8 +911,9 @@ package body VL53L0X is
    ---------------------------
 
    function Sequence_Step_Timeout
-     (This : VL53L0X_Ranging_Sensor;
-      Step : VL53L0x_Sequence_Step) return UInt32
+     (This     : VL53L0X_Ranging_Sensor;
+      Step     : VL53L0x_Sequence_Step;
+      As_Mclks : Boolean := False) return UInt32
    is
       VCSel_Pulse_Period_Pclk : Byte;
       Encoded_Byte            : Byte;
@@ -845,50 +922,26 @@ package body VL53L0X is
       Timeout_Mclks           : UInt32;
       Sequence_Steps          : VL53L0x_Sequence_Step_Enabled;
 
-      function To_Timeout_Microseconds
-        (Timeout_Period_Mclks : UInt32;
-         VCSel_Period_Pclks   : UInt8) return UInt32;
-
-      -----------------------------
-      -- To_Timeout_Microseconds --
-      -----------------------------
-
-      function To_Timeout_Microseconds
-        (Timeout_Period_Mclks : UInt32;
-         VCSel_Period_Pclks   : UInt8) return UInt32
-      is
-         PLL_Period_Ps        : constant := 1655;
-         Macro_Period_Vclks   : constant := 2304;
-         Macro_Period_Ps      : UInt32;
-         Macro_Period_Ns      : UInt32;
-
-      begin
-         Macro_Period_Ps :=
-           UInt32 (VCSel_Period_Pclks) * PLL_Period_Ps * Macro_Period_Vclks;
-         Macro_Period_Ns := (Macro_Period_Ps + 500) / 1000;
-
-         return (Timeout_Period_Mclks * Macro_Period_Ns + 500) / 1000;
-      end To_Timeout_Microseconds;
-
    begin
       case Step is
          when TCC | DSS | MSRC =>
-            VCSel_Pulse_Period_Pclk :=
-              Get_VCSel_Pulse_Period (This, Pre_Range);
-
             Read (This, REG_MSRC_CONFIG_TIMEOUT_MACROP,
                   Encoded_Byte, Status);
             if Status then
                Timeout_Mclks := Decode_Timeout (UInt16 (Encoded_Byte));
             end if;
 
-            return To_Timeout_Microseconds
-              (Timeout_Mclks, VCSel_Pulse_Period_Pclk);
+            if As_Mclks then
+               return Timeout_Mclks;
+            else
+               VCSel_Pulse_Period_Pclk :=
+                 Get_VCSel_Pulse_Period (This, Pre_Range);
+
+               return To_Timeout_Microseconds
+                 (Timeout_Mclks, VCSel_Pulse_Period_Pclk);
+            end if;
 
          when Pre_Range =>
-            VCSel_Pulse_Period_Pclk :=
-              Get_VCSel_Pulse_Period (This, Pre_Range);
-
             Read (This, REG_PRE_RANGE_CONFIG_TIMEOUT_MACROP_HI,
                   Encoded_UInt16, Status);
 
@@ -896,8 +949,15 @@ package body VL53L0X is
                Timeout_Mclks := Decode_Timeout (Encoded_UInt16);
             end if;
 
-            return To_Timeout_Microseconds
-              (Timeout_Mclks, VCSel_Pulse_Period_Pclk);
+            if As_Mclks then
+               return Timeout_Mclks;
+            else
+               VCSel_Pulse_Period_Pclk :=
+                 Get_VCSel_Pulse_Period (This, Pre_Range);
+
+               return To_Timeout_Microseconds
+                 (Timeout_Mclks, VCSel_Pulse_Period_Pclk);
+            end if;
 
          when Final_Range =>
             Sequence_Steps := Get_Sequence_Step_Enabled (This);
@@ -925,8 +985,12 @@ package body VL53L0X is
             Timeout_Mclks :=
               Decode_Timeout (Encoded_UInt16) - Timeout_Mclks;
 
-            return To_Timeout_Microseconds
-              (Timeout_Mclks, VCSel_Pulse_Period_Pclk);
+            if As_Mclks then
+               return Timeout_Mclks;
+            else
+               return To_Timeout_Microseconds
+                 (Timeout_Mclks, VCSel_Pulse_Period_Pclk);
+            end if;
       end case;
    end Sequence_Step_Timeout;
 
@@ -990,32 +1054,6 @@ package body VL53L0X is
       Sub_Timeout                  : UInt32 := 0;
       Msrc_Dcc_Tcc_Timeout         : UInt32;
       Status                       : Boolean := True;
-
-      function To_Timeout_Mclks
-        (Timeout_Period_us  : UInt32;
-         VCSel_Period_Pclks : UInt8) return UInt32;
-
-      ----------------------
-      -- To_Timeout_Mclks --
-      ----------------------
-
-      function To_Timeout_Mclks
-        (Timeout_Period_us  : UInt32;
-         VCSel_Period_Pclks : UInt8) return UInt32
-      is
-         PLL_Period_Ps        : constant := 1655;
-         Macro_Period_Vclks   : constant := 2304;
-         Macro_Period_Ps      : UInt32;
-         Macro_Period_Ns      : UInt32;
-
-      begin
-         Macro_Period_Ps :=
-           UInt32 (VCSel_Period_Pclks) * PLL_Period_Ps * Macro_Period_Vclks;
-         Macro_Period_Ns := (Macro_Period_Ps + 500) / 1000;
-
-         return
-           (Timeout_Period_us * 1000 + Macro_Period_Ns / 2) / Macro_Period_Ns;
-      end To_Timeout_Mclks;
 
    begin
       Final_Range_Timing_Budget_us :=
@@ -1209,6 +1247,234 @@ package body VL53L0X is
 
       return Status;
    end Get_SPAD_Info;
+
+   ---------------------------
+   -- Set_Signal_Rate_Limit --
+   ---------------------------
+
+   procedure Set_Signal_Rate_Limit
+     (This       : VL53L0X_Ranging_Sensor;
+      Rate_Limit : Fix_Point_16_16)
+   is
+      function To_U32 is new Ada.Unchecked_Conversion
+        (Fix_Point_16_16, UInt32);
+      Reg : UInt16;
+      Status : Boolean with Unreferenced;
+   begin
+      --  Encoded as Fixed Point 9.7. Let's translate.
+      Reg := UInt16 (Shift_Right (To_U32 (Rate_Limit), 9) and 16#FFFF#);
+      Write (This, REG_FINAL_RANGE_CONFIG_MIN_COUNT_RATE_RTN_LIMIT,
+             Reg, Status);
+   end Set_Signal_Rate_Limit;
+
+   --------------------------------------
+   -- Set_Vcsel_Pulse_Period_Pre_Range --
+   --------------------------------------
+
+   function Set_VCSEL_Pulse_Period_Pre_Range
+     (This   : VL53L0X_Ranging_Sensor;
+      Period : Byte) return Boolean
+   is
+   begin
+      return Set_VCSel_Pulse_Period (This, Period, Pre_Range);
+   end Set_VCSEL_Pulse_Period_Pre_Range;
+
+   ----------------------------------------
+   -- Set_Vcsel_Pulse_Period_Final_Range --
+   ----------------------------------------
+
+   function Set_VCSEL_Pulse_Period_Final_Range
+     (This   : VL53L0X_Ranging_Sensor;
+      Period : Byte) return Boolean
+   is
+   begin
+      return Set_VCSel_Pulse_Period (This, Period, Final_Range);
+   end Set_VCSEL_Pulse_Period_Final_Range;
+
+   ----------------------------
+   -- Set_VCSel_Pulse_Period --
+   ----------------------------
+
+   function Set_VCSel_Pulse_Period
+     (This     : VL53L0X_Ranging_Sensor;
+      Period   : Byte;
+      Sequence : VL53L0x_Sequence_Step) return Boolean
+   is
+      Encoded       : constant Byte := Shift_Right (Period, 1) - 1;
+      Phase_High    : Byte;
+      Status        : Boolean;
+      Pre_Timeout   : UInt32;
+      Final_Timeout : UInt32;
+      Msrc_Timeout  : UInt32;
+      Timeout_Mclks : UInt32;
+      Steps_Enabled : constant VL53L0x_Sequence_Step_Enabled :=
+                        Get_Sequence_Step_Enabled (This);
+      Budget        : UInt32;
+      Sequence_Cfg  : Byte;
+
+   begin
+      --  Save the measurement timing budget
+      Budget := Get_Measurement_Timing_Budget (This);
+
+      case Sequence is
+         when Pre_Range =>
+            Pre_Timeout := Sequence_Step_Timeout (This, Pre_Range);
+            Msrc_Timeout := Sequence_Step_Timeout (This, MSRC);
+
+            case Period is
+               when 12 =>
+                  Phase_High := 16#18#;
+               when 14 =>
+                  Phase_High := 16#30#;
+               when 16 =>
+                  Phase_High := 16#40#;
+               when 18 =>
+                  Phase_High := 16#50#;
+               when others =>
+                  return False;
+            end case;
+
+            Write (This, REG_PRE_RANGE_CONFIG_VALID_PHASE_HIGH,
+                   Phase_High, Status);
+            if not Status then
+               return False;
+            end if;
+
+            Write (This, REG_PRE_RANGE_CONFIG_VALID_PHASE_LOW,
+                   Byte'(16#08#), Status);
+            if not Status then
+               return False;
+            end if;
+
+            Write (This, REG_PRE_RANGE_CONFIG_VCSEL_PERIOD,
+                   Encoded, Status);
+            if not Status then
+               return False;
+            end if;
+
+            --  Update the timeouts
+            Timeout_Mclks := To_Timeout_Mclks (Pre_Timeout, Period);
+            Write (This, REG_PRE_RANGE_CONFIG_TIMEOUT_MACROP_HI,
+                   UInt16 (Timeout_Mclks), Status);
+
+            Timeout_Mclks := To_Timeout_Mclks (Msrc_Timeout, Period);
+            if Timeout_Mclks > 256 then
+               Timeout_Mclks := 255;
+            else
+               Timeout_Mclks := Timeout_Mclks - 1;
+            end if;
+
+            Write (This, REG_MSRC_CONFIG_TIMEOUT_MACROP,
+                   Byte (Timeout_Mclks), Status);
+
+         when Final_Range =>
+            Pre_Timeout := Sequence_Step_Timeout
+              (This, Pre_Range, As_Mclks => True);
+            Final_Timeout := Sequence_Step_Timeout (This, Final_Range);
+
+            declare
+               Phase_High  : Byte;
+               Width       : Byte;
+               Cal_Timeout : Byte;
+               Cal_Lim     : Byte;
+            begin
+               case Period is
+                  when 8 =>
+                     Phase_High  := 16#10#;
+                     Width       := 16#02#;
+                     Cal_Timeout := 16#0C#;
+                     Cal_Lim     := 16#30#;
+                  when 10 =>
+                     Phase_High  := 16#28#;
+                     Width       := 16#03#;
+                     Cal_Timeout := 16#09#;
+                     Cal_Lim     := 16#20#;
+                  when 12 =>
+                     Phase_High  := 16#38#;
+                     Width       := 16#03#;
+                     Cal_Timeout := 16#08#;
+                     Cal_Lim     := 16#20#;
+                  when 14 =>
+                     Phase_High  := 16#48#;
+                     Width       := 16#03#;
+                     Cal_Timeout := 16#07#;
+                     Cal_Lim     := 16#20#;
+                  when others =>
+                     return False;
+               end case;
+
+               Write (This, REG_FINAL_RANGE_CONFIG_VALID_PHASE_HIGH,
+                      Phase_High, Status);
+               if not Status then
+                  return False;
+               end if;
+
+               Write (This, REG_FINAL_RANGE_CONFIG_VALID_PHASE_LOW,
+                      Byte'(16#08#), Status);
+               if not Status then
+                  return False;
+               end if;
+
+               Write (This, REG_GLOBAL_CONFIG_VCSEL_WIDTH,
+                      Width, Status);
+               if not Status then
+                  return False;
+               end if;
+
+               Write (This, REG_ALGO_PHASECAL_CONFIG_TIMEOUT,
+                      Cal_Timeout, Status);
+               if not Status then
+                  return False;
+               end if;
+
+               Write (This, 16#FF#, Byte'(16#01#), Status);
+               Write (This, REG_ALGO_PHASECAL_LIM,
+                      Cal_Lim, Status);
+               Write (This, 16#FF#, Byte'(16#00#), Status);
+               if not Status then
+                  return False;
+               end if;
+            end;
+
+            --  Apply new VCSEL period
+            Write (This, REG_FINAL_RANGE_CONFIG_VCSEL_PERIOD,
+                   Encoded, Status);
+
+            --  Update timeouts
+            Timeout_Mclks := To_Timeout_Mclks (Final_Timeout, Period);
+
+            if Steps_Enabled (Pre_Range) then
+               --  the pre-range timeout must be added in this case
+               Timeout_Mclks := Timeout_Mclks + Pre_Timeout;
+            end if;
+
+            Write (This, REG_FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI,
+                   Encode_Timeout (Timeout_Mclks), Status);
+
+         when others =>
+            return False;
+      end case;
+
+      if Status then
+         --  Restore the measurement timing budget
+         Status := Set_Measurement_Timing_Budget (This, Budget);
+      end if;
+
+      --  And finally perform the phase calibration.
+      Read (This, REG_SYSTEM_SEQUENCE_CONFIG, Sequence_Cfg, Status);
+
+      if Status then
+         Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Byte'(16#02#), Status);
+      end if;
+      if Status then
+         Status := Perform_Single_Ref_Calibration (This, 16#00#);
+      end if;
+      if Status then
+         Write (This, REG_SYSTEM_SEQUENCE_CONFIG, Sequence_Cfg, Status);
+      end if;
+
+      return Status;
+   end Set_VCSel_Pulse_Period;
 
    ----------------------------
    -- Get_VCSel_Pulse_Period --

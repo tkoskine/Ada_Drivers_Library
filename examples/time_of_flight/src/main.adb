@@ -78,9 +78,18 @@ begin
       end if;
 
       if Status then
+         --  ??? Try to set long range detection
+         Set_Signal_Rate_Limit (Sensors (Center).all, 0.1);
+         Status :=
+           Set_VCSEL_Pulse_Period_Pre_Range (Sensors (Center).all, 18);
+         Status :=
+           Set_VCSEL_Pulse_Period_Final_Range (Sensors (Center).all, 14);
+      end if;
+
+      if Status then
          --  100ms timing budget
          Status := Set_Measurement_Timing_Budget
-           (Sensors (Center).all, 100_000);
+           (Sensors (Center).all, 200_000);
       end if;
    end if;
 

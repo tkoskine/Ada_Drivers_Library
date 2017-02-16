@@ -95,6 +95,23 @@ package VL53L0X is
    function Set_Measurement_Timing_Budget
      (This                 : VL53L0X_Ranging_Sensor;
       Budget_Micro_Seconds : HAL.UInt32) return Boolean;
+   --  Sets the measurement timing budget.
+   --  The more time, the more precisions. By default, the budget is ~33ms
+
+   procedure Set_Signal_Rate_Limit
+     (This       : VL53L0X_Ranging_Sensor;
+      Rate_Limit : Fix_Point_16_16);
+   --  Default signal rate: 0.25 MCPS
+
+   function Set_VCSEL_Pulse_Period_Pre_Range
+     (This   : VL53L0X_Ranging_Sensor;
+      Period : HAL.Byte) return Boolean;
+   --  Default period: 14 PCLKs
+
+   function Set_VCSEL_Pulse_Period_Final_Range
+     (This   : VL53L0X_Ranging_Sensor;
+      Period : HAL.Byte) return Boolean;
+   --  Default period: 10 PCLKs
 
 private
 
@@ -323,11 +340,17 @@ private
      (This : VL53L0X_Ranging_Sensor) return VL53L0x_Sequence_Step_Enabled;
 
    function Sequence_Step_Timeout
-     (This : VL53L0X_Ranging_Sensor;
-      Step : VL53L0x_Sequence_Step) return HAL.UInt32;
+     (This     : VL53L0X_Ranging_Sensor;
+      Step     : VL53L0x_Sequence_Step;
+      As_Mclks : Boolean := False) return HAL.UInt32;
 
    function Get_VCSel_Pulse_Period
      (This     : VL53L0X_Ranging_Sensor;
       Sequence : VL53L0x_Sequence_Step) return HAL.Byte;
+
+   function Set_VCSel_Pulse_Period
+     (This     : VL53L0X_Ranging_Sensor;
+      Period   : HAL.Byte;
+      Sequence : VL53L0x_Sequence_Step) return Boolean;
 
 end VL53L0X;

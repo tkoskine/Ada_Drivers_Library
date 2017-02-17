@@ -78,24 +78,25 @@ begin
       end if;
 
       if Status then
-         --  ??? Try to set long range detection
+         --  Long range detection:
          Set_Signal_Rate_Limit (Sensors (Center).all, 0.1);
+         Status := Set_Measurement_Timing_Budget
+           (Sensors (Center).all, 100_000);
          Status :=
            Set_VCSEL_Pulse_Period_Pre_Range (Sensors (Center).all, 18);
          Status :=
            Set_VCSEL_Pulse_Period_Final_Range (Sensors (Center).all, 14);
-      end if;
 
-      if Status then
-         --  100ms timing budget
-         Status := Set_Measurement_Timing_Budget
-           (Sensors (Center).all, 200_000);
+         --  High accuracy detection:
+--           Set_Signal_Rate_Limit (Sensors (Center).all, 0.25);
+--           Status := Set_Measurement_Timing_Budget
+--             (Sensors (Center).all, 200_000);
       end if;
    end if;
 
    loop
       Measure := Read_Range_Single_Millimeters (Sensors (Center).all);
-      if Measure = 8190 then
+      if Measure > 4000 then
          Set_Display (VL53L0A1, "----");
       else
          Set_Display (VL53L0A1, Natural (Measure));

@@ -303,7 +303,10 @@ package body VL53L0A1 is
       end loop;
 
       --  Base sensor i2c address
-      Final_Addr := 16#52#;
+      --  Here, we don't start with 16#52#, as this would lead to the first
+      --  sensor being assigned 16#54#, which is the address of the touch
+      --  panel on the STM32F469-disco board (on the same I2C bus).
+      Final_Addr := 16#54#;
 
       for Id in This.Sensors'Range loop
          Initialize (This.Sensors (Id).all);
